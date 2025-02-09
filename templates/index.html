@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Video Search Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #search-bar {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #search-button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #search-button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .result-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .result-item h3 {
+            margin-top: 0;
+        }
+        .result-item a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .result-item a:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            color: #555;
+        }
+        .error {
+            color: red;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Facebook Video Search Tool</h1>
+    <input type="text" id="search-bar" placeholder="Paste Facebook video link here">
+    <button id="search-button">Search</button>
+
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('search-button').addEventListener('click', async () => {
+            const videoUrl = document.getElementById('search-bar').value;
+            if (!videoUrl) {
+                alert("Please paste a Facebook video link.");
+                return;
+            }
+
+            // Show loading message
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `<p class="loading">Loading...</p>`;
+
+            try {
+                // Send request to your backend
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ video_url: videoUrl }),
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+                    return;
+                }
+
+                // Display video details
+                resultsDiv.innerHTML = `
+                    <div class="result-item">
+                        <h3>Video Details</h3>
+                        <p><strong>Title:</strong> ${data.video_details.title}</p>
+                        <p><strong>URL:</strong> <a href="${data.video_details.url}" target="_blank">${data.video_details.url}</a></p>
+                    </div>
+                `;
+
+                // Display Google results
+                if (data.google_results.length > 0) {
+                    resultsDiv.innerHTML += `<h3>Google Results</h3>`;
+                    data.google_results.forEach((item, index) => {
+                        resultsDiv.innerHTML += `
+                            <div class="result-item">
+                                <p><strong>${index + 1}. ${item.title}</strong></p>
+                                <p><a href="${item.link}" target="_blank">${item.link}</a></p>
+                                <p>${item.snippet || "No description available."}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultsDiv.innerHTML += `<p>No Google results found.</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
